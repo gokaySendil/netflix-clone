@@ -1,22 +1,43 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { MdChevronLeft, MdChevronRight } from "react-icons/md";
+import { AiOutlineClose } from 'react-icons/ai';
 import { UserAuth } from "../context/AuthContext";
 import { db } from "../firebase";
-import {updateDoc,doc,onSnapshot} from 'firebase/firestore';
+import { updateDoc, doc, onSnapshot } from 'firebase/firestore';
 const SavedShows = () => {
-    const {user} = UserAuth();
+  const { user } = UserAuth();
+  const [movies, setMovies] = useState([])
 
 
 
-    const slideLeft = () => {
-        var slider = document.getElementById('slider');
-        slider.scrollLeft = slider.scrollLeft - 500;
-      }
-      const slideRight = () => {
-        var slider = document.getElementById('slider');
-        slider.scrollLeft = slider.scrollLeft + 500;
-      }
+  const slideLeft = () => {
+    var slider = document.getElementById('slider');
+    slider.scrollLeft = slider.scrollLeft - 500;
+  }
+  const slideRight = () => {
+    var slider = document.getElementById('slider');
+    slider.scrollLeft = slider.scrollLeft + 500;
+  }
+  useEffect(() => {
+    onSnapshot(doc(db, 'users', `${user?.email}`), (doc) => {
+      setMovies(doc.data()?.savedShows);
+    });
+  }, [user?.email]);
+
+  const movieRef = doc(db, 'users', `${user?.email}`)
+  console.log(movieRef);
+  const deleteShow = async (passedID) => {
+    try {
+      const result = movies.filter((item) => item.id !== passedID)
+      await updateDoc(movieRef, {
+        savedShows: result,
+      })
+
+    } catch (error) {
+      console.log(error);
+    }
+  }
   return (
     <>
       <h2 className="text-white font-bold md:text-xl p-4">My Shows</h2>
@@ -34,7 +55,7 @@ const SavedShows = () => {
         >
           {movies.map((item, id) => {
             return (
-              <div className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] inline-block cursor-pointer relative p-2">
+              <div key={id} className="w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] inline-block cursor-pointer relative p-2">
                 <img
                   className="w-full h-auto block"
                   src={`https://image.tmdb.org/t/p/w500/${item?.img}`}
@@ -48,7 +69,8 @@ const SavedShows = () => {
                   >
                     {item?.title}
                   </p>
-                 
+                  <p onClick={() => deleteShow(item.id)} className='absolute text-gray-300 top-4 right-4'><AiOutlineClose /></p>
+
                 </div>
               </div>
             );
